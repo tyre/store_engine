@@ -19,6 +19,10 @@ class User < ActiveRecord::Base
   def is_admin?
     is_admin
   end
+
+  def one_click_available?
+    customer
+  end
 end
 # == Schema Information
 #

@@ -33,30 +33,22 @@
     end
 
     def create
-      customer = Customer.find_by_user_id(current_user) ||
-      Customer.new(params[:customer])
-      if customer.save
-        @order = Order.create(customer: customer, status: "paid")
-        customer_saved(customer)
+      @order = customer.orders.create_from_cart(@cart)
+      if @order.save
+        redirect_to order_path(@order)
+      else
+        render :new
       end
     end
 
     def one_click
-      if Customer.find_by_user_id(current_user.id)
-        one_click_confirmed
+      if current_user.one_click_available?
+        order = OneClickOrder.create(current_user, params[:product])
+        redirect_to order_path(order)
       else
-        flash[:message]= "We're sorry, but you must have placed a previous" +
-        "order to use 2-click. Please fill out your info below."
+        flash[:message] = t(:one_click_non_customer)
         redirect_to new_order_path
       end
-    end
-
-    def one_click_confirmed
-        one_click_cart = Cart.create(:user_id => current_user.id)
-        one_click_cart.add_product_by_id(params[:product])
-        @order = Order.create_from_cart(one_click_cart)
-        ConfirmationMailer.confirmation_email(current_user).deliver
-        redirect_to order_path(@order, :id => @order.id)
     end
 
     def destroy
@@ -65,15 +57,8 @@
       redirect_to orders_path
     end
 
-    private
-    def customer_saved(customer)
-      @order.add_from_cart(@cart)
-      if @order.save
-        ConfirmationMailer.confirmation_email(current_user).deliver
-        @cart.clear
-        redirect_to order_path(@order)
-      else
-        render 'orders/new'
-      end
-    end
+private
+  def customer
+    @customer ||= current_user.customer || Customer.create(params[:customer])
   end
+end

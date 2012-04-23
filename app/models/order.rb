@@ -9,6 +9,14 @@ class Order < ActiveRecord::Base
 
   validates_presence_of :customer_id
 
+  after_create :send_confirmation_email
+
+  STATUSES = {:paid => "paid"}
+
+  def send_confirmation_email
+    ConfirmationMailer.confirmation_email(user).deliver
+  end
+
   def update_attributes(params)
     self.shipped = Time.now if params[:status] == "shipped" &&
     status != "shipped"
@@ -25,10 +33,15 @@ class Order < ActiveRecord::Base
 
   def self.create_from_cart(cart)
     ord = Order.new(customer: Customer.find_or_create_by_user(cart.user))
-    ord.status = "paid"
+    ord.status = STATUSES[:paid]
     ord.add_from_cart(cart)
-    ord.save
+    ord.save!
+    cart.clear
     ord
+  end
+
+  def self.build_from_product_id(product_id)
+    Order.new.tap{|o| o.product_ids << product_id}
   end
 
   def total

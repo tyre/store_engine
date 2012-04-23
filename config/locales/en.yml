@@ -3,3 +3,4 @@
 
 en:
   hello: "Hello world"
+  one_click_non_customer: "We're sorry, but you must have placed a previous order to use 2-click. Please fill out your info below."

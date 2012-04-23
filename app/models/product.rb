@@ -42,6 +42,7 @@ class Product < ActiveRecord::Base
     products = products_in_orders(orders)
     products.select{ |product| product.id != id }[0,3]
   end
+  
   def products_in_orders(orders)
     orders.collect do |order|
       order.products.each do |product|
